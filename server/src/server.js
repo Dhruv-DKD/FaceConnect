@@ -2,9 +2,12 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import "dotenv/config";
 import cors from "cors";
+import path from "path";
 
 const app = express();
 const PORT = process.env.PORT;
+
+const __dirname = path.resolve();
 
 app.use(
   cors({
@@ -23,6 +26,19 @@ import { connectDB } from "./libs/db.js";
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/chat", chatRoutes);
+
+if (process.env.NODE_ENV === "production") {
+  const staticPath = path.join(__dirname, "../client/dist");
+  console.log("🧭 Static path:", staticPath);
+
+  app.use(express.static(staticPath));
+
+  // React Router fallback
+  // ✅ Works in Express 5+
+  app.get(/.*/, (req, res) => {
+    res.sendFile(path.join(staticPath, "index.html"));
+  });
+}
 
 connectDB()
   .then(() => {
